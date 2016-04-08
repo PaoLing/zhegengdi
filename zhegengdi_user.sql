@@ -15,3 +15,6 @@ CREATE TABLE zgd_users_table (
 
 
 # 商品数据表
+
+
+# query user SQL

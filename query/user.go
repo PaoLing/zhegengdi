@@ -1,14 +1,14 @@
-package main
+package query
 
 import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"os"
 )
 
-func main() {
-	db, err := sql.Open("mysql", "")
+// QueryUser for query user table
+func QueryUser() {
+	db, err := sql.Open("mysql", "root:7756789w@/zhegengdi")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -19,5 +19,5 @@ func main() {
 		panic(err.Error())
 	}
 
-	fmt.Println("OK")
+	fmt.Println("Database connected")
 }
