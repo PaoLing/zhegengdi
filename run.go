@@ -1,41 +1,55 @@
 package zhegengdi
 
 import (
-	"bytes"
 	"fmt"
+	// "github.com/PaoLing/zhegengdi/query"
+	// "io/ioutil"
+	"bytes"
 	"net"
-	"zhegengdi/query"
+	"runtime"
 )
 
+var conMax int = 0
+
 func handler(conn net.Conn) {
+
+	fmt.Println(conn.RemoteAddr())
+	conMax += 1
+	fmt.Println(conMax)
+
 	defer conn.Close()
 
-	// declare an array for store type of io.Reader data
-	var buf [512]byte
+	buf := make([]byte, bytes.MinRead)
 
-	// read the request data from conn into an slice
-	n, err := conn.Read(buf[0:])
-	CheckErr(err)
+	conn.Read(buf)
 
-	// apply a buffer Object for write slice info
-	result := bytes.NewBuffer(nil)
-	result.Write(buf[0:n])
+	fmt.Println(string(buf))
 
-	fmt.Println(string(result.Bytes()))
-
+	conn.Write([]byte("HTTP/1.1 200 OK\r\n"))
+	conn.Write([]byte("Content-Type: text/html; charset=utf-8\r\n"))
+	conn.Write([]byte("Connection: keep-alive\r\n"))
+	conn.Write([]byte("\r\n"))
 	conn.Write([]byte("<h1>DATABASE SERVER</h1>"))
 }
 
 func Run() {
-
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	// connect mysql
-	query.QueryUser()
 
-	ln, err := net.Listen("tcp", ":8080")
+	service := ":8080"
+
+	laddr, err := net.ResolveTCPAddr("tcp", service)
+	CheckErr(err)
+
+	fmt.Println(laddr)
+
+	listener, err := net.ListenTCP("tcp", laddr)
 	CheckErr(err)
 	for {
-		conn, err := ln.Accept()
-		CheckErr(err)
+		conn, err := listener.Accept()
+		if err != nil {
+			continue
+		}
 
 		go handler(conn)
 	}

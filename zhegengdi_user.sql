@@ -14,7 +14,21 @@ CREATE TABLE zgd_users_table (
 );
 
 
-# 商品数据表
-
-
-# query user SQL
+# Insert row into table. 
+INSERT INTO zgd_users_table (
+	user_name,
+	user_mobile,
+	password,
+	nickname,
+	level, 
+	locked
+) 
+VALUES 
+(
+	"zhe_user_3387",
+	"0510-88764939",
+	"passport",
+	"小折人",
+	3,
+	false
+);
