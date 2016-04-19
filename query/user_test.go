@@ -1,6 +1,7 @@
 package query
 
 import (
+	"database/sql"
 	"fmt"
 	"testing"
 )
@@ -17,12 +18,12 @@ type User struct {
 	user_name   string
 	user_mobile string
 	password    string
-	email       interface{}
+	email       sql.NullString
 	nickname    string
 	level       byte
 	locked      bool
 	create_time string
-	comment     interface{}
+	comment     sql.NullString
 }
 
 func TestQueryUser(t *testing.T) {
@@ -37,6 +38,8 @@ func TestQueryUser(t *testing.T) {
 
 	var r *User = new(User)
 
+	fmt.Println(r)
+
 	arr := []interface{}{
 		&r.user_id, &r.user_name, &r.user_mobile, &r.password, &r.email,
 		&r.nickname, &r.level, &r.locked, &r.create_time, &r.comment,
@@ -49,5 +52,4 @@ func TestQueryUser(t *testing.T) {
 	}
 
 	fmt.Println(r)
-
 }
