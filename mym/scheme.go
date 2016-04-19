@@ -2,6 +2,7 @@ package mym
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"reflect"
 	"strings"
@@ -45,8 +46,28 @@ type Query struct {
 	Results []interface{}
 }
 
-func Q(model interface{}) (q *Query) {
+func Q(model interface{}) (q *Query, err error) {
+	CheckDestValid(model)
 
+	q = &Query{
+		T: model,
+	}
+	return q, nil
+}
+
+// CheckDestValid check out the model valid, if not a pointer or
+// value is nil, panic.
+func CheckDestValid(m interface{}) {
+	// if a destination type not a point, painc.
+	t := reflect.TypeOf(model)
+	if t.Kind() != reflect.Ptr {
+		panic(fmt.Sprintf("mym.Q: Type <%v> not a pointer", t.Name()))
+	}
+
+	tv := reflect.ValueOf(model)
+	if tv.IsNil() {
+		panic(fmt.Sprintf("Must be a no-nil value"))
+	}
 }
 
 func (q *Query) QueryAll() {

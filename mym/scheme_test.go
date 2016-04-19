@@ -32,7 +32,7 @@ func TestOpen(t *testing.T) {
 		}
 	}()
 
-	UserModel := &User{user_name: "zhe_user_3387"}
-	q := Q(UserModel)
+	UserModel := User{user_name: "zhe_user_3387"}
+	q := Q(&UserModel)
 
 }
