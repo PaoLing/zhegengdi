@@ -22,10 +22,8 @@ INSERT INTO zgd_users_table (
 	nickname,
 	level, 
 	locked
-) 
-VALUES 
-(
-	"zhe_user_3387",
+) VALUES (
+	"zhe_user_0003",
 	"0510-88764939",
 	"passport",
 	"小折人",

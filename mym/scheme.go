@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -41,49 +42,88 @@ func Close() error {
 	return opened.Close()
 }
 
-type Query struct {
-	T       interface{}
-	Results []interface{}
-}
-
+// Q receive a user-defined Database table struct, check out it's
 func Q(model interface{}) (q *Query, err error) {
-	CheckDestValid(model)
+	v, _ := CheckDestValid(model)
+
+	NumField := v.NumField()
+	fields := make([]interface{}, 0, NumField)
+
+	for i := 0; i < NumField; i++ {
+		field := v.Field(i)
+		if field.CanInterface() {
+			fields = append(fields, field.Addr().Interface())
+		}
+	}
 
 	q = &Query{
-		T: model,
+		Arch:    v.Addr().Interface(),
+		Results: fields,
 	}
+
 	return q, nil
 }
 
-// CheckDestValid check out the model valid, if not a pointer or
-// value is nil, panic.
-func CheckDestValid(m interface{}) {
-	// if a destination type not a point, painc.
-	t := reflect.TypeOf(model)
-	if t.Kind() != reflect.Ptr {
-		panic(fmt.Sprintf("mym.Q: Type <%v> not a pointer", t.Name()))
-	}
-
-	tv := reflect.ValueOf(model)
-	if tv.IsNil() {
-		panic(fmt.Sprintf("Must be a no-nil value"))
-	}
+// Query store the table model and the result lists that can be used by sql.Scan.
+type Query struct {
+	Arch    interface{}
+	Results []interface{}
 }
 
-func (q *Query) QueryAll() {
+// QueryAll query all rows.
+func (q *Query) QueryRows() (r []interface{}, err error) {
+	tableName, _ := GetTableName(q.Arch)
 
+	SQLQueryAll := fmt.Sprintf("SELECT * FROM %s", tableName)
+
+	rows, err := opened.Query(SQLQueryAll)
+	defer rows.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	allRows := make([]interface{}, 0)
+	for rows.Next() {
+		if err := rows.Scan(q.Results...); err != nil {
+			log.Fatal("Scan error: ", err)
+		}
+		r := CopyRow(q.Arch)
+		allRows = append(allRows, r)
+	}
+	return allRows, nil
+}
+
+func CopyRow(arch interface{}) interface{} {
+	t := reflect.ValueOf(arch).Elem()
+	return t.Interface()
 }
 
 func (q *Query) QueryByID(id int) {
+	return
+}
 
+// CheckDestValid check out the model valid.
+func CheckDestValid(model interface{}) (v reflect.Value, err error) {
+	v = reflect.ValueOf(model)
+
+	// if model not a pointer, painc.
+	if v.Kind() != reflect.Ptr {
+		panic(fmt.Sprintf("%v not a pointer", v.Type()))
+	}
+	// if model's value is nil, painc.
+	if v.IsNil() {
+		panic(fmt.Sprintf("(%v %v) Must have no-nil value", v, v.Type()))
+	}
+
+	return v.Elem(), nil
 }
 
 // GetTableName get the table name.
-func GetTableName(arch interface{}) string {
+func GetTableName(arch interface{}) (tableName string, err error) {
 	t := reflect.TypeOf(arch)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	table := t.Name()
-	return strings.ToLower(table)
+	tableName = t.Name()
+	return strings.ToLower(tableName), nil
 }
