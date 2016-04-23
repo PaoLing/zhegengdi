@@ -44,7 +44,7 @@ func Close() error {
 
 // Q receive a user-defined Database table struct, check out it's
 func Q(model interface{}) (q *Query, err error) {
-	v, _ := CheckDestValid(model)
+	v, _, _ := CheckDestValid(model)
 
 	NumField := v.NumField()
 	fields := make([]interface{}, 0, NumField)
@@ -60,7 +60,6 @@ func Q(model interface{}) (q *Query, err error) {
 		Arch:    v.Addr().Interface(),
 		Results: fields,
 	}
-
 	return q, nil
 }
 
@@ -71,7 +70,7 @@ type Query struct {
 }
 
 // QueryAll query all rows.
-func (q *Query) QueryRows() (r []interface{}, err error) {
+func (q *Query) QueryAll() (allRows []interface{}, err error) {
 	tableName, _ := GetTableName(q.Arch)
 
 	SQLQueryAll := fmt.Sprintf("SELECT * FROM %s", tableName)
@@ -82,15 +81,19 @@ func (q *Query) QueryRows() (r []interface{}, err error) {
 		log.Fatal(err)
 	}
 
-	allRows := make([]interface{}, 0)
+	allRows = make([]interface{}, 0)
 	for rows.Next() {
 		if err := rows.Scan(q.Results...); err != nil {
 			log.Fatal("Scan error: ", err)
 		}
-		r := CopyRow(q.Arch)
-		allRows = append(allRows, r)
+		row := CopyRow(q.Arch)
+		allRows = append(allRows, row)
 	}
 	return allRows, nil
+}
+
+func (q *Query) QueryByID(id int) {
+	return
 }
 
 func CopyRow(arch interface{}) interface{} {
@@ -98,13 +101,9 @@ func CopyRow(arch interface{}) interface{} {
 	return t.Interface()
 }
 
-func (q *Query) QueryByID(id int) {
-	return
-}
-
 // CheckDestValid check out the model valid.
-func CheckDestValid(model interface{}) (v reflect.Value, err error) {
-	v = reflect.ValueOf(model)
+func CheckDestValid(model interface{}) (reflect.Value, reflect.Type, error) {
+	v := reflect.ValueOf(model)
 
 	// if model not a pointer, painc.
 	if v.Kind() != reflect.Ptr {
@@ -115,7 +114,9 @@ func CheckDestValid(model interface{}) (v reflect.Value, err error) {
 		panic(fmt.Sprintf("(%v %v) Must have no-nil value", v, v.Type()))
 	}
 
-	return v.Elem(), nil
+	t := reflect.TypeOf(model).Elem()
+
+	return v.Elem(), t, nil
 }
 
 // GetTableName get the table name.

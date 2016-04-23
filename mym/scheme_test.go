@@ -21,20 +21,26 @@ type Zgd_Users_Table struct {
 	holder2     sql.NullBool
 }
 
-func TestOpen(t *testing.T) {
-	db := DB{
-		Driver: "mysql",
-		DSN:    "root:7756789w@/zhegengdi",
-	}
-
+func TOpen() {
+	db := DB{Driver: "mysql", DSN: "root:7756789w@/zhegengdi"}
 	db.Open()
+}
 
-	defer func() {
-		err := Close()
-		if err != nil {
-			t.Error(err.Error())
-		}
-	}()
+func TClose(t *testing.T) {
+	err := Close()
+	if err != nil {
+		t.Error("Close the opened db Error:", err.Error())
+	}
+}
+
+func TestOpen(t *testing.T) {
+	TOpen()
+	defer TClose(t)
+}
+
+func TestQueryAll(t *testing.T) {
+	TOpen()
+	defer TClose(t)
 
 	UserModel := Zgd_Users_Table{User_name: "zhe_user_3387"}
 
@@ -43,16 +49,15 @@ func TestOpen(t *testing.T) {
 		fmt.Println(q)
 	}
 
-	var r interface{}
-	r, err = q.QueryRows()
+	var rows []interface{}
+	rows, err = q.QueryAll()
 	if err != nil {
 		t.Error(err.Error())
 	}
 
-	if rows, ok := r.([]interface{}); ok {
-		for _, r := range rows {
-			fmt.Println(r)
-		}
+	// database query result rows
+	for _, r := range rows {
+		fmt.Println(r)
 	}
 }
 
@@ -63,4 +68,10 @@ func TestGetTableName(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
+}
+
+func TestQueryById(t *testing.T) {
+	TOpen()
+	defer TClose(t)
+
 }
