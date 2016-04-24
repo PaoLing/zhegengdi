@@ -1,24 +1,23 @@
 package mym
 
 import (
-	"database/sql"
 	"fmt"
 	"testing"
 )
 
 type Zgd_Users_Table struct {
-	User_id     int64  `require:"true" action:"auto"`
+	Id          int64  `require:"true" action:"auto"`
 	User_name   string `require:"true" default:"zhe_user_0001"`
 	User_mobile string `require:"true"`
 	Password    string `require:"true"`
 	holder1     string
-	Email       sql.NullString
+	Email       string
 	Nickname    string `require:"true" default:"little zhe 001"`
 	Level       byte   `require:"true" default:"3"`
 	Locked      bool   `require:"true" default:"false"`
 	Create_time string `require:"true" default:"zhe_user_0001"`
-	Comment     sql.NullString
-	holder2     sql.NullBool
+	Comment     string
+	holder2     bool
 }
 
 func TOpen() {
@@ -74,4 +73,15 @@ func TestQueryById(t *testing.T) {
 	TOpen()
 	defer TClose(t)
 
+	UserModel := Zgd_Users_Table{}
+	q, err := Q(&UserModel)
+	if err != nil {
+		fmt.Println(q)
+	}
+
+	row, err2 := q.QueryByID(2)
+	if err2 != nil {
+		t.Error("query by id error:", err2)
+	}
+	fmt.Println("found: ", row)
 }

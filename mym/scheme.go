@@ -46,6 +46,8 @@ func Close() error {
 func Q(model interface{}) (q *Query, err error) {
 	v, _, _ := CheckDestValid(model)
 
+	tableName, _ := GetTableName(model)
+
 	NumField := v.NumField()
 	fields := make([]interface{}, 0, NumField)
 
@@ -57,23 +59,23 @@ func Q(model interface{}) (q *Query, err error) {
 	}
 
 	q = &Query{
-		Arch:    v.Addr().Interface(),
-		Results: fields,
+		Arch:      v.Addr().Interface(),
+		Results:   fields,
+		TableName: tableName,
 	}
 	return q, nil
 }
 
 // Query store the table model and the result lists that can be used by sql.Scan.
 type Query struct {
-	Arch    interface{}
-	Results []interface{}
+	Arch      interface{}
+	Results   []interface{}
+	TableName string
 }
 
 // QueryAll query all rows.
 func (q *Query) QueryAll() (allRows []interface{}, err error) {
-	tableName, _ := GetTableName(q.Arch)
-
-	SQLQueryAll := fmt.Sprintf("SELECT * FROM %s", tableName)
+	SQLQueryAll := fmt.Sprintf("SELECT * FROM %s", q.TableName)
 
 	rows, err := opened.Query(SQLQueryAll)
 	defer rows.Close()
@@ -92,8 +94,14 @@ func (q *Query) QueryAll() (allRows []interface{}, err error) {
 	return allRows, nil
 }
 
-func (q *Query) QueryByID(id int) {
-	return
+// QueryByID query one row by given ID.
+func (q *Query) QueryByID(id int32) (interface{}, error) {
+	SQLQueryID := fmt.Sprintf("SELECT * FROM %s WHERE id=%d", q.TableName, id)
+	err := opened.QueryRow(SQLQueryID).Scan(q.Results...)
+	if err != nil {
+		return nil, err
+	}
+	return CopyRow(q.Arch), nil
 }
 
 func CopyRow(arch interface{}) interface{} {

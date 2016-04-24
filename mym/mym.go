@@ -23,25 +23,28 @@ func (my *MyM) Insert(model interface{}) (err error) {
 	v, t, _ := CheckDestValid(model)
 
 	tableName, _ := GetTableName(model)
-	SQLp1 := SQLSelectStart(tableName)
+	var SQLInsertHead string = SQLSelectStart(tableName)
+	var SQLInsertTail string
 
 	for i, n := 0, t.NumField(); i < n; i++ {
 		f := t.Field(i)
 		vf := v.FieldByName(f.Name)
 		if vf.CanInterface() {
-			SQLp1 = SQLp1 + f.Name + ", "
+			SQLInsertHead = SQLInsertHead + f.Name + ","
 		}
 	}
-	SQLp1 = SQLp1 + ") VALUES ("
-	fmt.Println(SQLp1)
 
 	for i, n := 0, v.NumField(); i < n; i++ {
 		f := v.Field(i)
 		if f.CanInterface() {
 			value := GetKindValue(f)
-			fmt.Println(value)
+			SQLInsertTail = SQLInsertTail + value + ","
 		}
 	}
+
+	SQLInsert := SQLInsertHead + ") VALUES (" + SQLInsertTail
+	fmt.Println(SQLInsert)
+
 	return nil
 }
 
@@ -61,13 +64,7 @@ func GetKindValue(f reflect.Value) string {
 		return fmt.Sprint(f.Uint())
 	case reflect.Float32, reflect.Float64:
 		return fmt.Sprint(f.Float())
-	case reflect.Struct:
-		return "struct"
-	case reflect.Invalid:
-		fmt.Println("invalid...")
-		return "invalid"
 	default:
-		fmt.Println("default...")
-		return "defult"
+		return ""
 	}
 }
