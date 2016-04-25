@@ -3,7 +3,9 @@ package mym
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
+	"strings"
 )
 
 const (
@@ -61,36 +63,45 @@ func (my *MyM) Insert(model interface{}) (err error) {
 		f := t.Field(i)
 		vf := v.FieldByName(f.Name)
 		if vf.CanInterface() {
-			SQLInsertHead = SQLInsertHead + f.Name + ","
-
+			name := strings.ToLower(f.Name)
+			if name != "id" {
+				SQLInsertHead = SQLInsertHead + name + ","
+			}
 		}
 	}
+	SQLInsertHead2 := []rune(SQLInsertHead)
+	SQLInsertHead = string(SQLInsertHead2[:len(SQLInsertHead2)-1])
 
 	for i, n := 0, v.NumField(); i < n; i++ {
 		f := v.Field(i)
 		if f.CanInterface() {
 			value := GetKindValue(f)
-
-			SQLInsertTail = SQLInsertTail + value + ","
+			if IsZeroedValue(value) {
+				value = " "
+			}
+			ft := t.Field(i)
+			if strings.ToLower(ft.Name) != "id" {
+				SQLInsertTail = SQLInsertTail + "\"" + value + "\"" + ","
+			}
 		}
 	}
-	/*
-		SQLInsert := SQLInsertHead + ") VALUES (" + SQLInsertTail + ");"
-		fmt.Println(SQLInsert)
+	SQLInsertTail2 := []rune(SQLInsertTail)
+	SQLInsertTail = string(SQLInsertTail2[:len(SQLInsertTail2)-1])
 
-		insertStmt, err := opened.Prepare(SQLInsert)
-		if err != nil {
-			panic(fmt.Sprintf("Prepare insert query SQL error:%s", err.Error()))
-		}
-		_, err = insertStmt.Exec()
-		if err != nil {
-			panic(fmt.Sprintf("Insert row error:%s", err.Error()))
-		} else {
-			log.Print("Insert row succed")
-			return nil
-		}*/
+	SQLInsert := SQLInsertHead + ") VALUES (" + SQLInsertTail + ");"
+	fmt.Println(SQLInsert)
 
-	return nil
+	insertStmt, err := opened.Prepare(SQLInsert)
+	if err != nil {
+		panic(fmt.Sprintf("Prepare insert query SQL error:%s", err.Error()))
+	}
+	_, err = insertStmt.Exec()
+	if err != nil {
+		panic(fmt.Sprintf("Insert row error:%s", err.Error()))
+	} else {
+		log.Print("Insert row succed")
+		return nil
+	}
 }
 
 func SQLSelectStart(tableName string) string {
