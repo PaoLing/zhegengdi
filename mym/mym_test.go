@@ -1,9 +1,16 @@
 package mym
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
+
+type W struct {
+	b byte
+	i int32
+	j int64
+}
 
 func TestInsert(t *testing.T) {
 	TOpen()
@@ -21,5 +28,15 @@ func TestInsert(t *testing.T) {
 	err := mym.Insert(&User)
 	if err != nil {
 		t.Error(err)
+	}
+
+}
+
+func TestIsZeroedValue(t *testing.T) {
+	values := []interface{}{0, false, "", 0.0}
+	fmt.Println(values)
+	for _, v := range values {
+		r := IsZeroedValue(v)
+		fmt.Println(r)
 	}
 }

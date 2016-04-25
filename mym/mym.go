@@ -6,6 +6,12 @@ import (
 	"reflect"
 )
 
+const (
+	TagRequire = "require"
+	TagDefault = "default"
+	PrimaryKey = "primary_key"
+)
+
 // NewORM allocate a value that type is *MyM and return it.
 func NewORM() *MyM {
 	mym := new(MyM)
@@ -16,6 +22,31 @@ func NewORM() *MyM {
 
 type MyM struct {
 	db *sql.DB
+}
+
+func getExtraTag(f reflect.StructField, tag string) bool {
+	return f.Tag.Get(tag) == "true"
+}
+
+func (my *MyM) CreateTable(model interface{}) error {
+	return nil
+}
+
+func IsZeroedValue(v interface{}) bool {
+	switch f := v.(type) {
+	case string:
+		return f == ""
+	case bool:
+		return !f
+	case int, int8, int16, int32, int64:
+		return f == 0
+	case uint, uint8, uint16, uint32, uint64:
+		return f == 0
+	case float32, float64:
+		return f == 0.0
+	default:
+		return false
+	}
 }
 
 // Insert a row into Database.
@@ -31,6 +62,7 @@ func (my *MyM) Insert(model interface{}) (err error) {
 		vf := v.FieldByName(f.Name)
 		if vf.CanInterface() {
 			SQLInsertHead = SQLInsertHead + f.Name + ","
+
 		}
 	}
 
@@ -38,12 +70,25 @@ func (my *MyM) Insert(model interface{}) (err error) {
 		f := v.Field(i)
 		if f.CanInterface() {
 			value := GetKindValue(f)
+
 			SQLInsertTail = SQLInsertTail + value + ","
 		}
 	}
+	/*
+		SQLInsert := SQLInsertHead + ") VALUES (" + SQLInsertTail + ");"
+		fmt.Println(SQLInsert)
 
-	SQLInsert := SQLInsertHead + ") VALUES (" + SQLInsertTail
-	fmt.Println(SQLInsert)
+		insertStmt, err := opened.Prepare(SQLInsert)
+		if err != nil {
+			panic(fmt.Sprintf("Prepare insert query SQL error:%s", err.Error()))
+		}
+		_, err = insertStmt.Exec()
+		if err != nil {
+			panic(fmt.Sprintf("Insert row error:%s", err.Error()))
+		} else {
+			log.Print("Insert row succed")
+			return nil
+		}*/
 
 	return nil
 }
@@ -64,6 +109,8 @@ func GetKindValue(f reflect.Value) string {
 		return fmt.Sprint(f.Uint())
 	case reflect.Float32, reflect.Float64:
 		return fmt.Sprint(f.Float())
+	case reflect.Struct:
+		return "struct..."
 	default:
 		return ""
 	}

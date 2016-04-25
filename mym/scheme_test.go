@@ -1,22 +1,23 @@
 package mym
 
 import (
+	///"database/sql"
 	"fmt"
 	"testing"
 )
 
 type Zgd_Users_Table struct {
-	Id          int64  `require:"true" action:"auto"`
-	User_name   string `require:"true" default:"zhe_user_0001"`
+	Id          int64  `require:"true" auto_increment:"true" primary_key:"true"`
+	User_name   string `require:"true"`
 	User_mobile string `require:"true"`
 	Password    string `require:"true"`
 	holder1     string
-	Email       string
+	Email       string `require:"true" default:""`
 	Nickname    string `require:"true" default:"little zhe 001"`
 	Level       byte   `require:"true" default:"3"`
 	Locked      bool   `require:"true" default:"false"`
 	Create_time string `require:"true" default:"zhe_user_0001"`
-	Comment     string
+	Comment     string `require:"true" defaulr:""`
 	holder2     bool
 }
 
