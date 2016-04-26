@@ -122,9 +122,9 @@ func CheckDestValid(model interface{}) (reflect.Value, reflect.Type, error) {
 		panic(fmt.Sprintf("(%v %v) Must have no-nil value", v, v.Type()))
 	}
 
-	t := reflect.TypeOf(model).Elem()
+	t := reflect.TypeOf(model)
 
-	return v.Elem(), t, nil
+	return v.Elem(), t.Elem(), nil
 }
 
 // GetTableName get the table name.

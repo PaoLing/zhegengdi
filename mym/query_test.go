@@ -80,9 +80,9 @@ func TestQueryById(t *testing.T) {
 		fmt.Println(q)
 	}
 
-	row, err2 := q.QueryByID(2)
-	if err2 != nil {
-		t.Error("query by id error:", err2)
+	row, err := q.QueryByID(2)
+	if err != nil {
+		t.Error("query by id error:", err)
 	}
 	fmt.Println("found: ", row)
 }

@@ -2,8 +2,8 @@ package mym
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -52,7 +52,7 @@ func IsZeroedValue(v interface{}) bool {
 }
 
 // Insert a row into Database.
-func (my *MyM) Insert(model interface{}) (err error) {
+func (my *MyM) Insert(model interface{}) (int64, error) {
 	v, t, _ := CheckDestValid(model)
 
 	tableName, _ := GetTableName(model)
@@ -81,7 +81,7 @@ func (my *MyM) Insert(model interface{}) (err error) {
 			}
 			ft := t.Field(i)
 			if strings.ToLower(ft.Name) != "id" {
-				SQLInsertTail = SQLInsertTail + "\"" + value + "\"" + ","
+				SQLInsertTail = SQLInsertTail + "'" + value + "'" + ","
 			}
 		}
 	}
@@ -95,13 +95,17 @@ func (my *MyM) Insert(model interface{}) (err error) {
 	if err != nil {
 		panic(fmt.Sprintf("Prepare insert query SQL error:%s", err.Error()))
 	}
-	_, err = insertStmt.Exec()
+	rest, err := insertStmt.Exec()
 	if err != nil {
 		panic(fmt.Sprintf("Insert row error:%s", err.Error()))
-	} else {
-		log.Print("Insert row succed")
-		return nil
 	}
+
+	id, err := rest.LastInsertId()
+	if err != nil {
+		return id, err
+	}
+
+	return storeIDToModel(id, model)
 }
 
 func SQLSelectStart(tableName string) string {
@@ -125,4 +129,64 @@ func GetKindValue(f reflect.Value) string {
 	default:
 		return ""
 	}
+}
+
+func (my MyM) Update(model interface{}) (int64, error) {
+	v, t, _ := CheckDestValid(model)
+	setSQL, id := GenSetSQL(v, t)
+	tableName, _ := GetTableName(model)
+
+	SQLUpdate := fmt.Sprintf("UPDATE %s SET %s WHERE id=%d", tableName, setSQL, id)
+	fmt.Println(SQLUpdate)
+	stmtUpd, err := opened.Prepare(SQLUpdate)
+	if err != nil {
+		return id, err
+	}
+	_, err = stmtUpd.Exec()
+	if err != nil {
+		return id, err
+	}
+	return id, nil
+}
+
+// storeIDToModel store Database Id to model.
+func storeIDToModel(id int64, model interface{}) (int64, error) {
+	v, _, _ := CheckDestValid(model)
+	f := v.FieldByName("Id")
+	if v.CanSet() {
+		f.SetInt(id)
+		return id, nil
+	}
+	return id, errors.New("Struct's Id can't set")
+}
+
+func GenSetSQL(v reflect.Value, t reflect.Type) (string, int64) {
+	fieldId := v.FieldByName("Id")
+	var id int64
+	var SQL string
+	var fields = make(map[string]string)
+
+	if fieldId.IsValid() {
+		id = fieldId.Int()
+	}
+
+	numField := t.NumField()
+	for i := 0; i < numField; i++ {
+		f := t.Field(i)
+		vf := v.Field(i)
+		if vf.CanInterface() {
+			value := GetKindValue(vf)
+			fname := strings.ToLower(f.Name)
+			if fname == "id" {
+				continue
+			}
+			value = "'" + value + "'"
+			fields[fname] = value
+		}
+	}
+
+	for k, v := range fields {
+		SQL = SQL + k + "=" + v + ","
+	}
+	return SQL[:len(SQL)-1], id
 }
