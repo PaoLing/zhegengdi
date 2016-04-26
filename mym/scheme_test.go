@@ -15,7 +15,7 @@ type Zgd_Users_Table struct {
 	Email       string `require:"true" default:""`
 	Nickname    string `require:"true" default:"little zhe 001"`
 	Level       byte   `require:"true" default:"3"`
-	Locked      bool   `require:"true" default:"false"`
+	Locked      uint8  `require:"true" default:"false"`
 	Create_time string `require:"true" default:"zhe_user_0001"`
 	Comment     string `require:"true" defaulr:""`
 	holder2     bool

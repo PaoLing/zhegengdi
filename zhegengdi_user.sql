@@ -7,7 +7,7 @@ CREATE TABLE zgd_users_table (
 	email VARCHAR(100) NOT NULL DEFAULT '',
 	nickname VARCHAR(50) NOT NULL DEFAULT '',
 	level TINYINT NOT NULL DEFAULT 3,
-	locked TINYINT(1) NOT NULL DEFAULT false,
+	locked TINYINT(1) NOT NULL DEFAULT 0,
 	create_time TIMESTAMP NOT NULL DEFAULT current_timestamp(),
 	comment VARCHAR(255) NOT NULL DEFAULT '',
 	PRIMARY KEY(user_id)
