@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 )
@@ -15,15 +16,26 @@ const (
 )
 
 // NewORM allocate a value that type is *MyM and return it.
+//
+// mym := NewORM()
+//
 func NewORM() *MyM {
 	mym := new(MyM)
 	mym.db = opened
+	mym.cond = &Condition{}
 
 	return mym
 }
 
 type MyM struct {
-	db *sql.DB
+	db    *sql.DB
+	model interface{} // store the model
+	Table string      // table name
+	cond  *Condition
+}
+
+func (mym *MyM) RegisteModel(model interface{}) {
+
 }
 
 func getExtraTag(f reflect.StructField, tag string) bool {
@@ -131,7 +143,7 @@ func GetKindValue(f reflect.Value) string {
 	}
 }
 
-func (my MyM) Update(model interface{}) (int64, error) {
+func (my *MyM) Update(model interface{}) (int64, error) {
 	v, t, _ := CheckDestValid(model)
 	setSQL, id := GenSetSQL(v, t)
 	tableName, _ := GetTableName(model)
@@ -160,14 +172,22 @@ func storeIDToModel(id int64, model interface{}) (int64, error) {
 	return id, errors.New("Struct's Id can't set")
 }
 
-func GenSetSQL(v reflect.Value, t reflect.Type) (string, int64) {
+func GetSingleRowId(v reflect.Value) (int64, error) {
 	fieldId := v.FieldByName("Id")
-	var id int64
+	if fieldId.IsValid() {
+		return fieldId.Int(), nil
+	}
+	return 0, errors.New(fmt.Sprintf("%v field Id not exist.", v))
+}
+
+// GenSetSQL generate part of UPDATE SQL.
+func GenSetSQL(v reflect.Value, t reflect.Type) (string, int64) {
 	var SQL string
 	var fields = make(map[string]string)
 
-	if fieldId.IsValid() {
-		id = fieldId.Int()
+	id, err := GetSingleRowId(v)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	numField := t.NumField()
@@ -190,3 +210,39 @@ func GenSetSQL(v reflect.Value, t reflect.Type) (string, int64) {
 	}
 	return SQL[:len(SQL)-1], id
 }
+
+// Delete delete a single row by id column.
+func (mym *MyM) Delete(model interface{}) bool {
+	v, _, _ := CheckDestValid(model)
+	id, err := GetSingleRowId(v)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tableName, _ := GetTableName(model)
+	SQL := fmt.Sprintf("DELETE FROM %s WHERE id=?", tableName)
+	stmtDelete, err := opened.Prepare(SQL)
+	if err != nil {
+		return false
+	}
+	_, err = stmtDelete.Exec(id)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (mym *MyM) Where(query string, params ...interface{}) {
+	mym.cond.Where(query, params...)
+}
+
+/*
+fake usage:
+
+db := NewOrm()
+var Users []User
+db.Where("name = ?", "bob").Exec(&Users)
+db.Where("name = ?", "bob").Exec(&Users)
+db.Where("name = ? AND age = ?", "bob", 20).Exec(&Users)
+db.Where("name = ? AND age = ?", "bob", 20).Filter("id", "profile").Exec(&Users)
+db.Complex().Where("age").LessThan(38).And("job").Equal("cook").Binary().LimitEnd(100).Exec(&User)
+*/

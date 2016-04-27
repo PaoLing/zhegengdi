@@ -36,6 +36,11 @@ func TestInsert(t *testing.T) {
 	if err != nil {
 		t.Error("Update error: ", err)
 	}
+
+	del := mym.Delete(&User)
+	if del {
+		fmt.Println("Deleted row.")
+	}
 }
 
 func TestIsZeroedValue(t *testing.T) {

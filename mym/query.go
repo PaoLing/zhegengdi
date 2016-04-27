@@ -128,8 +128,8 @@ func CheckDestValid(model interface{}) (reflect.Value, reflect.Type, error) {
 }
 
 // GetTableName get the table name.
-func GetTableName(arch interface{}) (tableName string, err error) {
-	t := reflect.TypeOf(arch)
+func GetTableName(model interface{}) (tableName string, err error) {
+	t := reflect.TypeOf(model)
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}

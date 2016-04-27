@@ -80,7 +80,7 @@ func TestQueryById(t *testing.T) {
 		fmt.Println(q)
 	}
 
-	row, err := q.QueryByID(2)
+	row, err := q.QueryByID(5)
 	if err != nil {
 		t.Error("query by id error:", err)
 	}
