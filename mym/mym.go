@@ -23,7 +23,6 @@ func NewORM() *MyM {
 	mym := new(MyM)
 	mym.db = opened
 	mym.cond = &Condition{}
-
 	return mym
 }
 
@@ -232,17 +231,6 @@ func (mym *MyM) Delete(model interface{}) bool {
 }
 
 func (mym *MyM) Where(query string, params ...interface{}) {
-	mym.cond.Where(query, params...)
+	cd := mym.cond.Where(query, params...)
+	fmt.Println("x:", cd.whereSQL)
 }
-
-/*
-fake usage:
-
-db := NewOrm()
-var Users []User
-db.Where("name = ?", "bob").Exec(&Users)
-db.Where("name = ?", "bob").Exec(&Users)
-db.Where("name = ? AND age = ?", "bob", 20).Exec(&Users)
-db.Where("name = ? AND age = ?", "bob", 20).Filter("id", "profile").Exec(&Users)
-db.Complex().Where("age").LessThan(38).And("job").Equal("cook").Binary().LimitEnd(100).Exec(&User)
-*/

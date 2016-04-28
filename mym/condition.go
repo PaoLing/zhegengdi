@@ -2,19 +2,23 @@ package mym
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Condition struct {
-	WhereSQL  string
-	HasHolder bool
+	whereSQL  string
+	hasHolder bool
+	pms       []interface{}
 }
 
 func (cond *Condition) Where(query string, params ...interface{}) *Condition {
 	if len(params) == 0 {
-		cond.WhereSQL = query
-		cond.HasHolder = false
+		cond.whereSQL = query
+		cond.hasHolder = false
+	} else {
+		cond.pms = params
+		cond.hasHolder = true
 	}
 
 	return cond
-
 }
